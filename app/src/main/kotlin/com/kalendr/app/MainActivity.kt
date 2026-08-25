@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -46,30 +45,33 @@ class MainActivity : AppCompatActivity() {
     private fun createContent(): ScrollView {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(24), dp(32), dp(24), dp(24))
+            setPadding(dp(16), dp(12), dp(16), dp(16))
             setBackgroundColor(Color.rgb(247, 244, 238))
         }
-        content.addView(text("KALENDR", 28f, Color.rgb(16, 42, 67)))
-        content.addView(text("Hijriah dan Jawa dalam satu bulan", 15f, Color.DKGRAY), margins(0, 4, 0, 20))
-        val navigation = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        val previous = button("‹", "Bulan sebelumnya") { visibleMonth = visibleMonth.minusMonths(1); renderMonth() }
-        val next = button("›", "Bulan berikutnya") { visibleMonth = visibleMonth.plusMonths(1); renderMonth() }
+        content.addView(text("KALENDR", 24f, Color.rgb(16, 42, 67)).apply {
+            gravity = Gravity.CENTER
+        })
+        content.addView(text("Hijriah dan Jawa dalam satu bulan", 13f, Color.DKGRAY).apply {
+            gravity = Gravity.CENTER
+        }, margins(0, 0, 0, 8))
         monthTitle = text("", 20f, Color.rgb(16, 42, 67)).apply {
             gravity = Gravity.CENTER
             isSingleLine = true
         }
-        navigation.addView(previous, LinearLayout.LayoutParams(dp(48), dp(48)))
-        navigation.addView(monthTitle, LinearLayout.LayoutParams(0, dp(48), 1f))
-        navigation.addView(next, LinearLayout.LayoutParams(dp(48), dp(48)))
-        content.addView(navigation)
-        content.addView(button("Hari ini", "Kembali ke hari ini") {
+        content.addView(monthTitle, margins(0, 0, 0, 4))
+        val actions = LinearLayout(this).apply {
+            gravity = Gravity.CENTER
+            orientation = LinearLayout.HORIZONTAL
+        }
+        actions.addView(button("Hari ini", "Kembali ke hari ini") {
             visibleMonth = YearMonth.from(today)
             renderMonth()
-        }, margins(0, 8, 0, 0))
-        content.addView(button("Pilih tanggal", "Buka pemilih tanggal") {
+        }, LinearLayout.LayoutParams(0, dp(42), 1f).apply { marginEnd = dp(4) })
+        actions.addView(button("Pilih tanggal", "Buka pemilih tanggal") {
             showDatePicker()
-        }, margins(0, 8, 0, 0))
-        content.addView(dayHeader(), margins(0, 18, 0, 4))
+        }, LinearLayout.LayoutParams(0, dp(42), 1f).apply { marginStart = dp(4) })
+        content.addView(actions, margins(0, 0, 0, 12))
+        content.addView(dayHeader(), margins(0, 0, 0, 2))
         calendarGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(MaterialCardView(this).apply {
             radius = dp(16).toFloat()
@@ -143,6 +145,9 @@ class MainActivity : AppCompatActivity() {
     private fun button(label: String, description: String, action: () -> Unit) = MaterialButton(this).apply {
         text = label
         textSize = 14f
+        insetTop = 0
+        insetBottom = 0
+        minHeight = 0
         contentDescription = description
         setOnClickListener { action() }
     }
