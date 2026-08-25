@@ -2,6 +2,8 @@ package com.kalendr.app
 
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +16,9 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.kalendr.app.calendar.HijriConverter
+import com.kalendr.app.calendar.IndonesianDayType
+import com.kalendr.app.calendar.IndonesianHolidayApi
+import com.kalendr.app.calendar.IndonesianHoliday
 import com.kalendr.app.calendar.JavaneseConverter
 import com.kalendr.app.calendar.MonthCalendar
 import com.kalendr.app.calendar.DateSelection
@@ -21,12 +26,21 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
     private var today = LocalDate.now()
     private var visibleMonth = YearMonth.from(today)
     private lateinit var monthTitle: TextView
     private lateinit var calendarGrid: LinearLayout
+    private lateinit var holidaySummary: TextView
+    private val holidayApi = IndonesianHolidayApi()
+    private val holidayExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val holidayCache = mutableMapOf<YearMonth, List<IndonesianHoliday>>()
+    private val holidayErrors = mutableSetOf<YearMonth>()
+    private val holidayRequests = mutableSetOf<YearMonth>()
     private val locale = Locale("id", "ID")
     private val accessibilityDateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
 
@@ -40,6 +54,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         today = LocalDate.now()
         if (::monthTitle.isInitialized) renderMonth()
+    }
+
+    override fun onDestroy() {
+        holidayExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     private fun createContent(): ScrollView {
@@ -80,6 +99,8 @@ class MainActivity : AppCompatActivity() {
             setContentPadding(dp(8), dp(8), dp(8), dp(8))
             addView(calendarGrid)
         })
+        holidaySummary = text("", 12f, Color.rgb(16, 42, 67))
+        content.addView(holidaySummary, margins(0, 10, 0, 0))
         content.addView(text("Angka kecil: tanggal Hijriah · tanggal Jawa / pasaran", 12f, Color.DKGRAY), margins(0, 12, 0, 0))
         return ScrollView(this).apply { addView(content) }
     }
@@ -90,10 +111,31 @@ class MainActivity : AppCompatActivity() {
         monthTitle.text = if (isCurrentMonth) "$monthLabel · Sekarang" else monthLabel
         monthTitle.setTextColor(if (isCurrentMonth) Color.rgb(23, 107, 135) else Color.rgb(16, 42, 67))
         calendarGrid.removeAllViews()
+        val monthHolidays = holidayCache[visibleMonth].orEmpty()
+        holidaySummary.text = IndonesianHolidayPresentation.summary(
+            monthHolidays,
+            loading = visibleMonth in holidayRequests,
+            error = visibleMonth in holidayErrors,
+        )
         MonthCalendar.build(visibleMonth).cells.chunked(7).forEach { week ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             week.forEach { cell -> row.addView(dayCell(cell.date), cellParams()) }
             calendarGrid.addView(row, margins(0, 0, 0, 3))
+        }
+        loadHolidays(visibleMonth)
+    }
+
+    private fun loadHolidays(month: YearMonth) {
+        if (month in holidayCache || month in holidayRequests || month in holidayErrors) return
+        holidayRequests += month
+        holidayExecutor.execute {
+            val result = runCatching { holidayApi.fetch(month) }
+            mainHandler.post {
+                holidayRequests -= month
+                result.onSuccess { holidayCache[month] = it }
+                    .onFailure { holidayErrors += month }
+                if (visibleMonth == month) renderMonth()
+            }
         }
     }
 
@@ -131,14 +173,32 @@ class MainActivity : AppCompatActivity() {
             val hijri = HijriConverter.convert(date)
             val javanese = JavaneseConverter.convert(date)
             val isToday = date == today
-            text = "${date.dayOfMonth}\n${hijri.day}/${hijri.month}\n${javanese.day} ${javanese.pasaran.take(3)}"
+            val holidays = holidayCache[visibleMonth].orEmpty().filter { it.date == date }
+            val holiday = holidays.firstOrNull()
+            text = listOfNotNull(
+                date.dayOfMonth.toString(),
+                "${hijri.day}/${hijri.month}",
+                "${javanese.day} ${javanese.pasaran.take(3)}",
+                holiday?.let(IndonesianHolidayPresentation::marker),
+            ).joinToString("\n")
             if (isToday) {
                 setBackgroundColor(Color.rgb(23, 107, 135))
                 setTextColor(Color.WHITE)
+            } else if (holiday != null) {
+                setTextColor(IndonesianHolidayPresentation.color(holiday.type))
             }
             val fullDate = date.format(accessibilityDateFormatter)
             val todayLabel = if (isToday) "Hari ini, " else ""
-            contentDescription = "$todayLabel$fullDate, ${hijri.day} Hijriah, ${javanese.day} Jawa ${javanese.pasaran}"
+            val holidayDescription = holidays.joinToString { holiday ->
+                val category = if (holiday.type == IndonesianDayType.NATIONAL_HOLIDAY) {
+                    "libur nasional"
+                } else {
+                    "cuti bersama"
+                }
+                "${holiday.name} ($category)"
+            }
+            val holidayLabel = if (holidayDescription.isEmpty()) "" else ", $holidayDescription"
+            contentDescription = "$todayLabel$fullDate, ${hijri.day} Hijriah, ${javanese.day} Jawa ${javanese.pasaran}$holidayLabel"
         }
     }
 

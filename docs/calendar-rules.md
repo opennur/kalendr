@@ -12,6 +12,14 @@ same result on every device.
   leap years Ehe, Dal, and Jimakir (years 2, 5, and 8). The five-day pasaran is
   anchored to 1 Sura 1960 = Kliwon.
 - The displayed Javanese year is the local year count starting at 1555.
+- Indonesian holidays are fetched per rendered month from the Tanggal Merah
+  API. The API's `holiday` type is represented as a national holiday and its
+  `leave` type as joint leave. If published Indonesian data is unavailable,
+  Nager.Date is used for predictable national holidays in the requested year.
+  The 2026 data follows SKB Menteri Agama,
+  Menteri Ketenagakerjaan, dan Menteri PANRB No. 1497/2025, No. 2/2025,
+  No. 5/2025. Joint leave is represented separately from national holidays;
+  it is not automatically a universal day off for every employer.
 
 Validated vector: 2026-08-25 = 11 Mulud 1960, Selasa Wage. Published calendars
 can differ by a day around kurup or local convention; this app follows the
@@ -22,3 +30,5 @@ Validation references:
 - https://ki-demang.com/almanak_jawa/konversi/masehi/2026/agustus/25
 - https://nusamasa.com/kalender/masehi/2026
 - https://mcp.anu.edu.au/proudfoot/calendars.html
+- https://www.kemenkopmk.go.id/index.php/pemerintah-tetapkan-17-hari-libur-nasional-dan-8-hari-cuti-bersama-tahun-2026
+- https://jdih.kemenkoinfra.go.id/cfind/source/files/skb-libur-nasional-dan-cuti-bersama-tahun-2026.pdf

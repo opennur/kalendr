@@ -17,6 +17,11 @@ Hijriah civil, dan kalender Jawa dalam satu tampilan bulanan yang ringkas.
 - Tombol **Pilih tanggal** dengan Material Date Picker untuk memilih tanggal,
   bulan, atau tahun secara langsung, termasuk tanggal historis seperti
   Februari 1900.
+- Mengambil hari besar/libur dari API per bulan yang sedang dirender.
+  Penanda **LIBUR** berwarna merah untuk libur nasional dan **CUTI** berwarna
+  hijau untuk cuti bersama. Tanggal Merah dipakai untuk data Indonesia yang
+  sudah ditetapkan; Nager.Date menjadi fallback untuk libur nasional yang
+  dapat diprediksi pada tahun berikutnya.
 - Tampilan Material 3 yang compact dan mendukung tema terang/gelap perangkat.
 
 ## Teknologi
@@ -84,6 +89,11 @@ Aturan konversi dijelaskan lebih lengkap di
   menghasilkan tanggal Hijriah dan Jawa yang sama di setiap perangkat.
 - Salah satu vektor validasi utama adalah `2026-08-25 = 11 Mulud 1960,
   Selasa Wage`.
+- Kalender hari besar/libur menggunakan SKB 3 Menteri 2026. Cuti bersama
+  ditampilkan terpisah karena pelaksanaannya dapat mengikuti kebijakan
+  perusahaan atau instansi masing-masing.
+- Endpoint utama: `https://tanggalmerah.upset.dev/api/holidays?year=YYYY&month=M`.
+- Endpoint fallback: `https://date.nager.at/api/v3/PublicHolidays/YYYY/ID`.
 
 Kalender yang diterbitkan oleh sumber lain dapat berbeda satu hari di sekitar
 kurup atau karena perbedaan konvensi lokal.

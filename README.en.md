@@ -16,6 +16,10 @@ civil Hijri, and Javanese calendars together in a compact monthly view.
 - Provides a **Hari ini** button to return to the current month.
 - Provides a **Pilih tanggal** Material Date Picker for direct date, month, or
   year selection, including historical dates such as February 1900.
+- Fetches holidays from an API for the month currently being rendered.
+  **LIBUR** markers use red for national holidays and **CUTI** markers use
+  green for joint leave. Tanggal Merah is used for published Indonesian data;
+  Nager.Date is the fallback for predictable national holidays in later years.
 - Uses a compact Material 3 interface and supports the device light/dark
   theme.
 
@@ -84,6 +88,11 @@ The conversion rules are documented in detail in
   same Hijri and Javanese dates on every device.
 - One of the primary validation vectors is `2026-08-25 = 11 Mulud 1960,
   Selasa Wage`.
+- The holiday calendar follows the 2026 Three-Minister Joint Decree. Joint
+  leave is shown separately because its application may depend on each
+  company or institution's policy.
+- Primary API endpoint: `https://tanggalmerah.upset.dev/api/holidays?year=YYYY&month=M`.
+- Fallback endpoint: `https://date.nager.at/api/v3/PublicHolidays/YYYY/ID`.
 
 Published calendars may differ by one day around kurup or because of local
 calendar conventions.

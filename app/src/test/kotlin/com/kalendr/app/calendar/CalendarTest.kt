@@ -79,4 +79,43 @@ class CalendarTest {
 
         assertTrue(month.cells.any { it.isToday(today) })
     }
+
+    @Test
+    fun `holiday API parser identifies national holiday`() {
+        val holidays = IndonesianHolidays.parse(
+            """
+            {"success":true,"data":[{"date":"2026-08-25","name":"Maulid Nabi Muhammad SAW","type":"holiday"}]}
+            """.trimIndent(),
+        )
+
+        assertEquals(1, holidays.size)
+        assertEquals("Maulid Nabi Muhammad SAW", holidays.single().name)
+        assertEquals(IndonesianDayType.NATIONAL_HOLIDAY, holidays.single().type)
+    }
+
+    @Test
+    fun `holiday API parser keeps joint leave separate from national holiday`() {
+        val holidays = IndonesianHolidays.parse(
+            """
+            {"success":true,"data":[{"date":"2026-12-24","name":"Kelahiran Yesus Kristus","type":"leave"}]}
+            """.trimIndent(),
+        )
+
+        assertEquals(1, holidays.size)
+        assertEquals(IndonesianDayType.JOINT_LEAVE, holidays.single().type)
+    }
+
+    @Test
+    fun `Nager parser preserves predictable future national holidays`() {
+        val holidays = IndonesianHolidays.parseNager(
+            """
+            [{"date":"2027-01-01","localName":"Tahun Baru Masehi","types":["Public"]}]
+            """.trimIndent(),
+            YearMonth.of(2027, 1),
+        )
+
+        assertEquals(1, holidays.size)
+        assertEquals(LocalDate.of(2027, 1, 1), holidays.single().date)
+        assertEquals(IndonesianDayType.NATIONAL_HOLIDAY, holidays.single().type)
+    }
 }
