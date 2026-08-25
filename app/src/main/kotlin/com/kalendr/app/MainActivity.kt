@@ -1,6 +1,5 @@
 package com.kalendr.app
 
-import android.app.Activity
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -10,15 +9,21 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.kalendr.app.calendar.HijriConverter
 import com.kalendr.app.calendar.JavaneseConverter
 import com.kalendr.app.calendar.MonthCalendar
+import com.kalendr.app.calendar.DateSelection
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
     private var today = LocalDate.now()
     private var visibleMonth = YearMonth.from(today)
     private lateinit var monthTitle: TextView
@@ -61,9 +66,18 @@ class MainActivity : Activity() {
             visibleMonth = YearMonth.from(today)
             renderMonth()
         }, margins(0, 8, 0, 0))
+        content.addView(button("Pilih tanggal", "Buka pemilih tanggal") {
+            showDatePicker()
+        }, margins(0, 8, 0, 0))
         content.addView(dayHeader(), margins(0, 18, 0, 4))
         calendarGrid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(calendarGrid)
+        content.addView(MaterialCardView(this).apply {
+            radius = dp(16).toFloat()
+            cardElevation = 0f
+            setCardBackgroundColor(Color.WHITE)
+            setContentPadding(dp(8), dp(8), dp(8), dp(8))
+            addView(calendarGrid)
+        })
         content.addView(text("Angka kecil: tanggal Hijriah · tanggal Jawa / pasaran", 12f, Color.DKGRAY), margins(0, 12, 0, 0))
         return ScrollView(this).apply { addView(content) }
     }
@@ -79,6 +93,24 @@ class MainActivity : Activity() {
             week.forEach { cell -> row.addView(dayCell(cell.date), cellParams()) }
             calendarGrid.addView(row, margins(0, 0, 0, 3))
         }
+    }
+
+    private fun showDatePicker() {
+        val selectedMillis = DateSelection.toUtcMillis(visibleMonth.atDay(1))
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Pilih tanggal")
+            .setSelection(selectedMillis)
+            .setCalendarConstraints(
+                CalendarConstraints.Builder()
+                    .setOpenAt(selectedMillis)
+                    .build()
+            )
+            .build()
+        picker.addOnPositiveButtonClickListener { millis ->
+            visibleMonth = YearMonth.from(DateSelection.fromUtcMillis(millis))
+            renderMonth()
+        }
+        picker.show(supportFragmentManager, "date-picker")
     }
 
     private fun dayHeader(): LinearLayout = LinearLayout(this).apply {
@@ -108,9 +140,9 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun button(label: String, description: String, action: () -> Unit) = Button(this).apply {
+    private fun button(label: String, description: String, action: () -> Unit) = MaterialButton(this).apply {
         text = label
-        textSize = 24f
+        textSize = 14f
         contentDescription = description
         setOnClickListener { action() }
     }

@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.Kalendr" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.Kalendr" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:colorAccent">#176B87</item>
         <item name="android:navigationBarColor">#102A43</item>

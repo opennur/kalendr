@@ -64,6 +64,15 @@ class CalendarTest {
     }
 
     @Test
+    fun `date picker selection round trips February 1900 in UTC`() {
+        val selected = LocalDate.of(1900, 2, 14)
+
+        assertEquals(selected, DateSelection.fromUtcMillis(DateSelection.toUtcMillis(selected)))
+        assertEquals(YearMonth.of(1900, 2), MonthCalendar.build(YearMonth.from(selected)).month)
+        assertEquals(28, MonthCalendar.build(YearMonth.of(1900, 2)).cells.count { it.date != null })
+    }
+
+    @Test
     fun `calendar cell identifies today`() {
         val today = LocalDate.of(2026, 8, 25)
         val month = MonthCalendar.build(YearMonth.from(today))
